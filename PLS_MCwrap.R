@@ -1459,6 +1459,15 @@ diff <- res_trt$rmst - res$rmst
 
 diff_df <- data.frame(rmst_diff = diff)
 
+# Scaling this for those with the conditions only, algebraically
+# diff_cond = diff_uncond / p1
+# As p1 is exactly the same in both arms
+# From Table 1, the number of individuals transitioning from ICF to K, D, or H is 179,427 + 74,002 + 80,821 = 334,250 out of 1,000,000, so p1 = 0.33425.
+# p1 <- 0.33425
+# diff_cond <- diff_life_exp / p1
+# quantile(diff_cond, c(0.025, 0.5, 0.975), na.rm = TRUE)
+# 0.60 years, 95% CI: −0.09, 1.20
+
 library(ggplot2)
 
 p<- ggplot(diff_df, aes(x = rmst_diff)) +
