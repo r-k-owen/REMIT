@@ -241,7 +241,7 @@ beta_wimd4<- -0.004
 beta_wimd5<- 0.140477
 
 
-pop_b$lp9 <- mu0 + beta_age*pop_b$agec + beta_sex*pop_b$sex + beta_wimd1*pop_b$wimd1 + beta_wimd2*pop_b$wimd2 + beta_wimd4*pop_b$wimd4 + beta_wimd5*pop_b$wimd5
+pop_b$lp9 <- mu0 + beta_age*pop_b$agec2 + beta_sex*pop_b$sex + beta_wimd1*pop_b$wimd1 + beta_wimd2*pop_b$wimd2 + beta_wimd4*pop_b$wimd4 + beta_wimd5*pop_b$wimd5
 pop_b$lp9_exp<-exp(pop_b$lp9)
 pop_b$t9 <- flexsurv::rllogis(n = n, shape = shape, scale = pop_b$lp9_exp)
 
@@ -278,7 +278,7 @@ beta_wimd2<- 0.068333
 beta_wimd4<- 0.056276
 beta_wimd5<- 0.133569
 
-pop_b$lp11 <- mu0 + beta_age*pop_b$agec + beta_sex*pop_b$sex + beta_wimd1*pop_b$wimd1 + beta_wimd2*pop_b$wimd2 + beta_wimd4*pop_b$wimd4 + beta_wimd5*pop_b$wimd5
+pop_b$lp11 <- mu0 + beta_age*pop_b$agec2 + beta_sex*pop_b$sex + beta_wimd1*pop_b$wimd1 + beta_wimd2*pop_b$wimd2 + beta_wimd4*pop_b$wimd4 + beta_wimd5*pop_b$wimd5
 pop_b$lp11_exp<-exp(pop_b$lp11)
 pop_b$t11 <- flexsurv::rllogis(n = n, shape = shape, scale = pop_b$lp11_exp)
 
@@ -294,7 +294,7 @@ beta_wimd2<- -0.16556
 beta_wimd4<- 0.054737
 beta_wimd5<- 0.103101
 
-pop_b$lp12 <- mu0 + beta_age*pop_b$agec + beta_sex*pop_b$sex + beta_wimd1*pop_b$wimd1 + beta_wimd2*pop_b$wimd2 + beta_wimd4*pop_b$wimd4 + beta_wimd5*pop_b$wimd5
+pop_b$lp12 <- mu0 + beta_age*pop_b$agec2 + beta_sex*pop_b$sex + beta_wimd1*pop_b$wimd1 + beta_wimd2*pop_b$wimd2 + beta_wimd4*pop_b$wimd4 + beta_wimd5*pop_b$wimd5
 pop_b$lp12_exp<-exp(pop_b$lp12)
 pop_b$t12 <- flexsurv::rllogis(n = n, shape = shape, scale = pop_b$lp12_exp)
 
