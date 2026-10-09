@@ -1,12 +1,10 @@
 ## ============================================================================
-## PSA: each of the B iterations draws a FRESH SOC
-## population (stages 1-4) AND a fresh HR_b AND the treated-arm transform,
-## so SOC and treated are properly paired within each iteration,
+## PSA: each of the B iterations draws a fresh SOC
+## population (stages 1-4) and a fresh HR_b,
+## so SOC and treated are paired within each iteration,
 ## and pooling across iterations captures both first-order (patient
 ## sampling) and second-order (HR parameter) uncertainty.
 ## ============================================================================
-
-install.packages("flexsurv")
 
 rm(list=ls())
 library(dplyr)
@@ -16,7 +14,7 @@ library(tidyr)
 library(survival)
 library(scales)  # for percent_format
 
-setwd("/Users/rkowen/Library/CloudStorage/OneDrive-SwanseaUniversity/Research_Projects/NIHR_REMIT/HTA_Sim/MonteCarlo/WithinCorr/")
+setwd("wd")
 
 ######################
 ##Simulate a cohort ##
