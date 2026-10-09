@@ -1,9 +1,9 @@
 ## ============================================================================
 ## MC_stability.R
-## Assess Monte Carlo stability of the patient-level simulation (PLS) to
-## justify the number of outer-loop iterations (B = 100).
+## Assess Monte Carlo stability of the patient-level simulation (PLS) 
+## (B = 100).
 ##
-## Inputs (written by PLS_20261007.R in the working directory):
+## Inputs (written by Patient_level_simulation.R in the working directory):
 ##   pooled_overall_incl_eligible.csv  - one row per iteration: overall and
 ##                                       treatment-eligible life expectancy
 ##                                       differences (SGLT-2i minus SOC)
@@ -20,17 +20,6 @@
 ##                                percentiles against iteration number
 ##   MC_trace_all_LE.png        - as above for every life expectancy difference
 ##
-## Approach
-##   * Running-mean / running-percentile trace plots: the estimate and the
-##     interval limits should settle well before the final iteration.
-##   * Monte Carlo standard error (MCSE) of the mean = SD / sqrt(B). (The
-##     jackknife SE of a mean is algebraically identical, so it adds nothing.)
-##   * MCSE of the 2.5th and 97.5th percentiles by bootstrapping the B
-##     iteration-level results. The jackknife is not used for percentiles
-##     because it is inconsistent for non-smooth statistics such as quantiles.
-##   * Iterations required for a target precision: MCSE scales with
-##     1/sqrt(B), so B_required = B * (MCSE / tolerance)^2.
-##   * Split-half check: estimates from iterations 1-50 vs all 100.
 ## ============================================================================
 
 library(dplyr)
@@ -41,7 +30,7 @@ set.seed(2026)        # for the bootstrap only
 n_boot <- 2000        # bootstrap resamples of the B iteration-level results
 
 ## Tolerances for the MCSE, on the scale results are reported (2 d.p. for
-## years, 3 d.p. for probabilities). Adjust if you prefer a different target.
+## years, 3 d.p. for probabilities). 
 tol_years <- 0.05     # life expectancy and age at transition, years
 tol_prob  <- 0.005    # transition probabilities
 
@@ -49,7 +38,7 @@ tol_prob  <- 0.005    # transition probabilities
 overall <- read.csv("pooled_overall_incl_eligible.csv")
 diffs   <- read.csv("per_iteration_differences.csv")
 
-## ---- Relabel K/D/H state codes as CKD/T2DM/HF to match the manuscript ----
+## ---- Relabel K/D/H state codes as CKD/T2DM/HF ----
 relabel_state <- function(x) {
   map <- c(K = "CKD", D = "T2DM", H = "HF")
   vapply(strsplit(x, " ", fixed = TRUE), function(words) {
@@ -76,8 +65,7 @@ long <- bind_rows(
   filter(is.finite(value)) %>%
   arrange(outcome, iter)
 
-## Transitions from triple-condition states to death have probability 1 in
-## both arms, so their probability difference is identically 0; drop them.
+## Transitions from triple-condition states to death have probability 1.
 long <- long %>%
   group_by(outcome) %>%
   filter(!(measure == "Transition probability" & sd(value) == 0)) %>%
@@ -164,7 +152,7 @@ trace_plot <- function(dat, title) {
     theme_bw(base_size = 9)
 }
 
-## Key outcomes reported in the abstract
+## Key outcomes plot
 key_outcomes <- c(
   "Life expectancy: treatment-eligible population",
   "T2DM -> Death: transition probability",
