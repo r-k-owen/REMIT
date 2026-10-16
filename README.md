@@ -43,7 +43,7 @@ If you use this code, please cite this paper: Owen RK, Hazell I, Lyons J, Latime
 
 ## License
 
-[LICENSE.txt](LICENSE.txt)
+[LICENSE](LICENSE)
 
 ## Funding
 
