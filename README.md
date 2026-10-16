@@ -41,9 +41,9 @@ Random seeds are set in both scripts, so results are reproducible.
 
 If you use this code, please cite this paper: Owen RK, Hazell I, Lyons J, Latimer N, Adler AI, Guthrie B, Lyons RA, Abrams KR. *SGLT-2 inhibitors across competing pathways of type 2 diabetes, chronic kidney disease and heart failure.* [Research Square, 2026, DOI – to be added on publication]
 
-## Licence
+## License
 
-
+[LICENSE.txt](LICENSE.txt)
 
 ## Funding
 
