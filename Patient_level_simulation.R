@@ -183,6 +183,27 @@ compute_iteration_stats <- function(pop_b) {
 iter_stats <- vector("list", B)
 iter_overall <- vector("list", B)
 
+surv_grid  <- 0:20       # years since entry to the state
+surv_trans <- 5:31       # transitions with a treatment effect
+iter_surv  <- vector("list", B)
+
+# Transition labels (CKD = K, T2DM = D, HF = H), as in Table 2
+trans_labels <- c(
+  `5`  = "CKD -> CKD-T2DM",            `6`  = "CKD -> CKD-HF",            `7`  = "CKD -> Death",
+  `8`  = "T2DM -> T2DM-CKD",           `9`  = "T2DM -> T2DM-HF",          `10` = "T2DM -> Death",
+  `11` = "HF -> HF-CKD",               `12` = "HF -> HF-T2DM",            `13` = "HF -> Death",
+  `14` = "CKD-T2DM -> CKD-T2DM-HF",    `15` = "CKD-T2DM -> Death",
+  `16` = "CKD-HF -> CKD-HF-T2DM",      `17` = "CKD-HF -> Death",
+  `18` = "T2DM-CKD -> T2DM-CKD-HF",    `19` = "T2DM-CKD -> Death",
+  `20` = "T2DM-HF -> T2DM-HF-CKD",     `21` = "T2DM-HF -> Death",
+  `22` = "HF-CKD -> HF-CKD-T2DM",      `23` = "HF-CKD -> Death",
+  `24` = "HF-T2DM -> HF-T2DM-CKD",     `25` = "HF-T2DM -> Death",
+  `26` = "CKD-T2DM-HF -> Death",       `27` = "CKD-HF-T2DM -> Death",
+  `28` = "T2DM-CKD-HF -> Death",       `29` = "T2DM-HF-CKD -> Death",
+  `30` = "HF-CKD-T2DM -> Death",       `31` = "HF-T2DM-CKD -> Death"
+)
+
+
 for (b in 1:B) {
   
   cat("Iteration:", b, "\n")
@@ -1027,6 +1048,20 @@ for (b in 1:B) {
   sf <- survfit(Surv(t31, rep(1,n)) ~ 1, data = pop_b)
   u31 <- approxfun(sf$time, sf$surv, rule=2)(pop_b$t31)  # patient's own SOC percentile (rank-preserving)
   pop_b$t31_trt <- approxfun(sf$surv^HR, sf$time, rule=2)(u31)
+
+  iter_surv[[b]] <- do.call(rbind, lapply(surv_trans, function(k) {
+    t_soc <- pop_b[[paste0("t", k)]]
+    t_trt <- pop_b[[paste0("t", k, "_trt")]]
+    data.frame(
+      iter  = b,
+      trans = k,
+      time  = rep(surv_grid, 2),
+      arm   = rep(c("SOC", "SGLT-2"), each = length(surv_grid)),
+      surv  = c(1 - ecdf(t_soc)(surv_grid),   # S(t) = P(T > t)
+                1 - ecdf(t_trt)(surv_grid))
+    )
+  }))
+
   
   # matrices
   m1 <- as.matrix(pop_b[, c("t5_trt","t6_trt","t7_trt")])
@@ -1255,3 +1290,43 @@ print(pooled_summary, digits = 4)
 print(diff_summary, digits = 4)
 write.csv(pooled_summary, "pooled_transition_table.csv", row.names = FALSE)
 write.csv(diff_summary, "pooled_difference_table.csv", row.names = FALSE)
+
+surv_all <- do.call(rbind, iter_surv)
+write.csv(surv_all, "per_iteration_survival_curves.csv", row.names = FALSE)
+
+# Mean curve and 2.5th / 97.5th percentiles across the B iterations
+surv_summary <- surv_all %>%
+  group_by(trans, arm, time) %>%
+  summarise(
+    est   = mean(surv),
+    lower = quantile(surv, 0.025),
+    upper = quantile(surv, 0.975),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    label = factor(trans_labels[as.character(trans)], levels = trans_labels),
+    arm   = factor(arm, levels = c("SGLT-2", "SOC"))
+  )
+
+plot_surv <- function(trans_set) {
+  ggplot(filter(surv_summary, trans %in% trans_set),
+         aes(x = time, y = est, colour = arm, fill = arm)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.25, colour = NA) +
+    geom_line(linewidth = 0.6) +
+    facet_wrap(~ label, ncol = 3) +
+    scale_y_continuous(limits = c(0, 1)) +
+    labs(x = "Time (years)", y = "Survival probability",
+         colour = NULL, fill = NULL) +
+    theme_classic() +
+    theme(strip.background = element_rect(colour = "black"),
+          legend.position = "right")
+}
+
+fig3A <- plot_surv(5:13)    # A: transitions from single conditions
+fig3B <- plot_surv(14:25)   # B: transitions from two conditions
+fig3C <- plot_surv(26:31)   # C: transitions from three conditions
+
+ggsave("Figure3A_single_conditions.png", fig3A, width = 10, height = 7.5, dpi = 300)
+ggsave("Figure3B_two_conditions.png",    fig3B, width = 10, height = 10,  dpi = 300)
+ggsave("Figure3C_three_conditions.png",  fig3C, width = 10, height = 5,   dpi = 300)
+
