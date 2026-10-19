@@ -1449,7 +1449,7 @@ plot_cif <- function(states) {
     facet_wrap(~ curve, ncol = 3) +
     scale_y_continuous(limits = c(0, 1)) +
     labs(x = "Time since entering state (years)",
-         y = "Cumulative probability of transition", colour = NULL, fill = NULL) +
+         y = "Cumulative incidence of transition", colour = NULL, fill = NULL) +
     theme_classic() + theme(strip.background = element_rect(colour = "black"))
 }
 
