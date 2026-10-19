@@ -1330,3 +1330,65 @@ ggsave("Figure3A_single_conditions.png", fig3A, width = 10, height = 7.5, dpi = 
 ggsave("Figure3B_two_conditions.png",    fig3B, width = 10, height = 10,  dpi = 300)
 ggsave("Figure3C_three_conditions.png",  fig3C, width = 10, height = 5,   dpi = 300)
 
+library(dplyr)
+library(ggplot2)
+
+setwd("/Users/rkowen/Library/CloudStorage/OneDrive-SwanseaUniversity/Research_Projects/NIHR_REMIT/HTA_Sim/MonteCarlo/WithinCorr/Figures/")
+
+surv_all <- read.csv("per_iteration_survival_curves.csv")   # iter, trans, time, arm, surv
+
+trans_labels <- c(
+  `5`  = "CKD -> CKD-T2DM",            `6`  = "CKD -> CKD-HF",            `7`  = "CKD -> Death",
+  `8`  = "T2DM -> T2DM-CKD",           `9`  = "T2DM -> T2DM-HF",          `10` = "T2DM -> Death",
+  `11` = "HF -> HF-CKD",               `12` = "HF -> HF-T2DM",            `13` = "HF -> Death",
+  `14` = "CKD-T2DM -> CKD-T2DM-HF",    `15` = "CKD-T2DM -> Death",
+  `16` = "CKD-HF -> CKD-HF-T2DM",      `17` = "CKD-HF -> Death",
+  `18` = "T2DM-CKD -> T2DM-CKD-HF",    `19` = "T2DM-CKD -> Death",
+  `20` = "T2DM-HF -> T2DM-HF-CKD",     `21` = "T2DM-HF -> Death",
+  `22` = "HF-CKD -> HF-CKD-T2DM",      `23` = "HF-CKD -> Death",
+  `24` = "HF-T2DM -> HF-T2DM-CKD",     `25` = "HF-T2DM -> Death",
+  `26` = "CKD-T2DM-HF -> Death",       `27` = "CKD-HF-T2DM -> Death",
+  `28` = "T2DM-CKD-HF -> Death",       `29` = "T2DM-HF-CKD -> Death",
+  `30` = "HF-CKD-T2DM -> Death",       `31` = "HF-T2DM-CKD -> Death"
+)
+
+# 1 - S(t) in each iteration, then mean and 2.5th / 97.5th percentiles across iterations
+# (taking percentiles of 1 - S is the same as 1 - the percentiles of S, with lower/upper swapped)
+cum_summary <- surv_all %>%
+  mutate(cum = 1 - surv) %>%
+  group_by(trans, arm, time) %>%
+  summarise(
+    est   = mean(cum),
+    lower = quantile(cum, 0.025, names = FALSE),
+    upper = quantile(cum, 0.975, names = FALSE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    label = factor(unname(trans_labels[as.character(trans)]), levels = unname(trans_labels)),
+    arm   = factor(arm, levels = c("SGLT-2", "SOC"))
+  )
+
+write.csv(cum_summary, "Figure3_one_minus_S_summary.csv", row.names = FALSE)
+
+plot_cum <- function(trans_set) {
+  ggplot(filter(cum_summary, trans %in% trans_set),
+         aes(x = time, y = est, colour = arm, fill = arm)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.25, colour = NA) +
+    geom_line(linewidth = 0.6) +
+    facet_wrap(~ label, ncol = 3) +
+    scale_y_continuous(limits = c(0, 1)) +
+    labs(x = "Time (years)", y = "Cumulative probability, 1 - S(t)",
+         colour = NULL, fill = NULL) +
+    theme_classic() +
+    theme(strip.background = element_rect(colour = "black"),
+          legend.position = "right")
+}
+
+fig3A_cum <- plot_cum(5:13)    # A: transitions from single conditions
+fig3B_cum <- plot_cum(14:25)   # B: transitions from two conditions
+fig3C_cum <- plot_cum(26:31)   # C: transitions from three conditions
+
+ggsave("Figure3A_single_conditions_1minusS.png", fig3A_cum, width = 10, height = 7.5, dpi = 300)
+ggsave("Figure3B_two_conditions_1minusS.png",    fig3B_cum, width = 10, height = 10,  dpi = 300)
+ggsave("Figure3C_three_conditions_1minusS.png",  fig3C_cum, width = 10, height = 5,   dpi = 300)
+
