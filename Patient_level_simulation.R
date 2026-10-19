@@ -1207,7 +1207,31 @@ for (b in 1:B) {
       exit_age4_soc = age4 + time4,
       exit_age4_trt = age4_trt + time4_trt
     )
-  
+
+    iter_state[[b]] <- do.call(rbind, lapply(names(state_defs), function(s) {
+    d <- state_defs[[s]]
+    do.call(rbind, lapply(c("SOC", "SGLT-2"), function(arm) {
+      sfx <- if (arm == "SOC") "" else "_trt"
+      # who entered the state in this arm (stage-1 entry is the same in both arms)
+      entry_col <- if (d$stage == 1) "trans1" else paste0("trans", d$stage, sfx)
+      in_state  <- which(pop_b[[entry_col]] == d$code)
+      if (length(in_state) == 0) return(NULL)
+      # competing exit times (time since entry) and which exit happens first
+      tm   <- sapply(d$exits, function(k) pop_b[[paste0("t", k, sfx)]][in_state])
+      tm   <- matrix(tm, ncol = length(d$exits))
+      t_ex <- apply(tm, 1, min)
+      first <- d$exits[max.col(-tm, ties.method = "first")]
+      rbind(
+        data.frame(iter = b, state = s, arm = arm, curve = "Remaining in state",
+                   time = surv_grid, value = 1 - ecdf(t_ex)(surv_grid)),
+        do.call(rbind, lapply(d$exits, function(k)
+          data.frame(iter = b, state = s, arm = arm, curve = trans_labels[as.character(k)],
+                     time = surv_grid,
+                     value = sapply(surv_grid, function(g) mean(t_ex <= g & first == k)))))
+      )
+    }))
+  }))
+        
   iter_stats[[b]] <- compute_iteration_stats(pop_b)
   iter_stats[[b]]$iter <- b
   
@@ -1391,4 +1415,52 @@ fig3C_cum <- plot_cum(26:31)   # C: transitions from three conditions
 ggsave("Figure3A_single_conditions_1minusS.png", fig3A_cum, width = 10, height = 7.5, dpi = 300)
 ggsave("Figure3B_two_conditions_1minusS.png",    fig3B_cum, width = 10, height = 10,  dpi = 300)
 ggsave("Figure3C_three_conditions_1minusS.png",  fig3C_cum, width = 10, height = 5,   dpi = 300)
+
+state_all <- do.call(rbind, iter_state)
+write.csv(state_all, "per_iteration_state_curves.csv", row.names = FALSE)
+
+state_summary <- state_all %>%
+  group_by(state, arm, curve, time) %>%
+  summarise(est = mean(value), lower = quantile(value, 0.025),
+            upper = quantile(value, 0.975), .groups = "drop") %>%
+  mutate(arm = factor(arm, levels = c("SGLT-2", "SOC")))
+
+# (i) Probability of remaining in each state - one panel per state
+plot_remain <- function(states) {
+  ggplot(filter(state_summary, curve == "Remaining in state", state %in% states) %>%
+           mutate(state = factor(state, levels = states)),
+         aes(time, est, colour = arm, fill = arm)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.25, colour = NA) +
+    geom_line(linewidth = 0.6) +
+    facet_wrap(~ state, ncol = 3) +
+    scale_y_continuous(limits = c(0, 1)) +
+    labs(x = "Time since entering state (years)",
+         y = "Probability of remaining in state", colour = NULL, fill = NULL) +
+    theme_classic() + theme(strip.background = element_rect(colour = "black"))
+}
+
+# (ii) Cumulative incidence of each exit - one panel per transition (same layout as now)
+plot_cif <- function(states) {
+  ggplot(filter(state_summary, curve != "Remaining in state", state %in% states) %>%
+           mutate(curve = factor(curve, levels = trans_labels)),
+         aes(time, est, colour = arm, fill = arm)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.25, colour = NA) +
+    geom_line(linewidth = 0.6) +
+    facet_wrap(~ curve, ncol = 3) +
+    scale_y_continuous(limits = c(0, 1)) +
+    labs(x = "Time since entering state (years)",
+         y = "Cumulative probability of transition", colour = NULL, fill = NULL) +
+    theme_classic() + theme(strip.background = element_rect(colour = "black"))
+}
+
+single <- c("CKD", "T2DM", "HF")
+double <- c("CKD-T2DM", "CKD-HF", "T2DM-CKD", "T2DM-HF", "HF-CKD", "HF-T2DM")
+triple <- c("CKD-T2DM-HF", "CKD-HF-T2DM", "T2DM-CKD-HF", "T2DM-HF-CKD", "HF-CKD-T2DM", "HF-T2DM-CKD")
+
+ggsave("Figure3A_remaining_single.png", plot_remain(single), width = 10, height = 3.5, dpi = 300)
+ggsave("Figure3B_remaining_double.png", plot_remain(double), width = 10, height = 6,   dpi = 300)
+ggsave("Figure3C_remaining_triple.png", plot_remain(triple), width = 10, height = 6,   dpi = 300)
+
+ggsave("Figure3A_cif_single.png", plot_cif(single), width = 10, height = 7.5, dpi = 300)
+ggsave("Figure3B_cif_double.png", plot_cif(double), width = 10, height = 10,  dpi = 300)
 
