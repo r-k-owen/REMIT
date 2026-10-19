@@ -1463,4 +1463,4 @@ ggsave("Figure3C_remaining_triple.png", plot_remain(triple), width = 10, height 
 
 ggsave("Figure3A_cif_single.png", plot_cif(single), width = 10, height = 7.5, dpi = 300)
 ggsave("Figure3B_cif_double.png", plot_cif(double), width = 10, height = 10,  dpi = 300)
-
+ggsave("Figure3C_cif_triple.png", plot_cif(triple), width = 10, height = 5, dpi = 300)
