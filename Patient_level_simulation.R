@@ -1346,18 +1346,16 @@ plot_surv <- function(trans_set) {
           legend.position = "right")
 }
 
-fig3A <- plot_surv(5:13)    # A: transitions from single conditions
-fig3B <- plot_surv(14:25)   # B: transitions from two conditions
-fig3C <- plot_surv(26:31)   # C: transitions from three conditions
+# fig3A <- plot_surv(5:13)    # A: transitions from single conditions
+# fig3B <- plot_surv(14:25)   # B: transitions from two conditions
+# fig3C <- plot_surv(26:31)   # C: transitions from three conditions
 
-ggsave("Figure3A_single_conditions.png", fig3A, width = 10, height = 7.5, dpi = 300)
-ggsave("Figure3B_two_conditions.png",    fig3B, width = 10, height = 10,  dpi = 300)
-ggsave("Figure3C_three_conditions.png",  fig3C, width = 10, height = 5,   dpi = 300)
+# ggsave("Figure3A_single_conditions.png", fig3A, width = 10, height = 7.5, dpi = 300)
+# ggsave("Figure3B_two_conditions.png",    fig3B, width = 10, height = 10,  dpi = 300)
+# ggsave("Figure3C_three_conditions.png",  fig3C, width = 10, height = 5,   dpi = 300)
 
 library(dplyr)
 library(ggplot2)
-
-setwd("/Users/rkowen/Library/CloudStorage/OneDrive-SwanseaUniversity/Research_Projects/NIHR_REMIT/HTA_Sim/MonteCarlo/WithinCorr/Figures/")
 
 surv_all <- read.csv("per_iteration_survival_curves.csv")   # iter, trans, time, arm, surv
 
@@ -1392,7 +1390,7 @@ cum_summary <- surv_all %>%
     arm   = factor(arm, levels = c("SGLT-2", "SOC"))
   )
 
-write.csv(cum_summary, "Figure3_one_minus_S_summary.csv", row.names = FALSE)
+write.csv(cum_summary, "Figure_one_minus_S_summary.csv", row.names = FALSE)
 
 plot_cum <- function(trans_set) {
   ggplot(filter(cum_summary, trans %in% trans_set),
@@ -1408,13 +1406,13 @@ plot_cum <- function(trans_set) {
           legend.position = "right")
 }
 
-fig3A_cum <- plot_cum(5:13)    # A: transitions from single conditions
-fig3B_cum <- plot_cum(14:25)   # B: transitions from two conditions
-fig3C_cum <- plot_cum(26:31)   # C: transitions from three conditions
+# fig3A_cum <- plot_cum(5:13)    # A: transitions from single conditions
+# fig3B_cum <- plot_cum(14:25)   # B: transitions from two conditions
+# fig3C_cum <- plot_cum(26:31)   # C: transitions from three conditions
 
-ggsave("Figure3A_single_conditions_1minusS.png", fig3A_cum, width = 10, height = 7.5, dpi = 300)
-ggsave("Figure3B_two_conditions_1minusS.png",    fig3B_cum, width = 10, height = 10,  dpi = 300)
-ggsave("Figure3C_three_conditions_1minusS.png",  fig3C_cum, width = 10, height = 5,   dpi = 300)
+# ggsave("Figure3A_single_conditions_1minusS.png", fig3A_cum, width = 10, height = 7.5, dpi = 300)
+# ggsave("Figure3B_two_conditions_1minusS.png",    fig3B_cum, width = 10, height = 10,  dpi = 300)
+# ggsave("Figure3C_three_conditions_1minusS.png",  fig3C_cum, width = 10, height = 5,   dpi = 300)
 
 state_all <- do.call(rbind, iter_state)
 write.csv(state_all, "per_iteration_state_curves.csv", row.names = FALSE)
@@ -1439,7 +1437,7 @@ plot_remain <- function(states) {
     theme_classic() + theme(strip.background = element_rect(colour = "black"))
 }
 
-# (ii) Cumulative incidence of each exit - one panel per transition (same layout as now)
+# (ii) Cumulative incidence of each exit - one panel per transition
 plot_cif <- function(states) {
   ggplot(filter(state_summary, curve != "Remaining in state", state %in% states) %>%
            mutate(curve = factor(curve, levels = trans_labels)),
